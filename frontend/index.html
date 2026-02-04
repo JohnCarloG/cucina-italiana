@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cucina Italiana</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="logo">Cucina Italiana</div>
+      <nav class="nav-actions">
+        <input class="input" type="search" placeholder="Cerca ricette" aria-label="Cerca ricette" />
+        <button class="btn">Login</button>
+        <button class="btn btn-primary">Carrello (0)</button>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div>
+          <h1>Ricette complete per ogni occasione</h1>
+          <p>Scopri piatti autentici, ingredienti selezionati e vini in abbinamento.</p>
+          <button class="btn btn-primary">Esplora il catalogo</button>
+        </div>
+        <div class="hero-card">
+          <h3>Ricetta del giorno</h3>
+          <p>Tagliatelle al ragù con ingredienti premium e vino consigliato.</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>Catalogo</h2>
+          <div class="filters">
+            <select class="input" aria-label="Filtro genere">
+              <option>Genere</option>
+            </select>
+            <select class="input" aria-label="Filtro difficoltà">
+              <option>Difficoltà</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <div class="card-media"></div>
+            <div class="card-body">
+              <h3>Risotto ai funghi</h3>
+              <p>Pronto in 35 minuti, perfetto per una cena elegante.</p>
+              <div class="card-actions">
+                <span class="tag">35 min</span>
+                <button class="btn btn-secondary">Aggiungi</button>
+              </div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-media"></div>
+            <div class="card-body">
+              <h3>Parmigiana di melanzane</h3>
+              <p>Una classica ricetta italiana con ingredienti freschi.</p>
+              <div class="card-actions">
+                <span class="tag">50 min</span>
+                <button class="btn btn-secondary">Aggiungi</button>
+              </div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-media"></div>
+            <div class="card-body">
+              <h3>Spaghetti alle vongole</h3>
+              <p>Sapori di mare con vino bianco in abbinamento.</p>
+              <div class="card-actions">
+                <span class="tag">25 min</span>
+                <button class="btn btn-secondary">Aggiungi</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="checkout">
+        <div>
+          <h2>Carrello</h2>
+          <p>1 ricetta selezionata · Totale stimato €32,50</p>
+        </div>
+        <button class="btn btn-primary">Procedi al checkout</button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2024 Cucina Italiana. Tutti i diritti riservati.</p>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

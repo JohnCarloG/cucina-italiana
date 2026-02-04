@@ -1,0 +1,149 @@
+═══════════════════════════════════════════════════════════
+  🍝 CUCINA ITALIANA - CONFIGURAZIONE COMPLETATA
+═══════════════════════════════════════════════════════════
+
+✅ Docker rimosso dal progetto
+✅ SQLite rimosso
+✅ Configurazione MySQL Aiven pronta
+✅ Script di avvio automatici creati
+✅ Documentazione completa aggiornata
+
+═══════════════════════════════════════════════════════════
+  📋 COSA FARE ORA
+═══════════════════════════════════════════════════════════
+
+PASSO 1: Crea le Tabelle su Aiven
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANTE: Le tabelle devono essere create PRIMA di avviare l'app!
+
+1. Vai su: https://console.aiven.io
+2. Seleziona il tuo servizio MySQL
+3. Vai su "Query Editor"
+4. Apri il file: schema.sql (nella root del progetto)
+5. Copia tutto il contenuto e incollalo nel Query Editor
+6. Esegui lo script per creare tutte le tabelle
+
+PASSO 2: Configura il Database Aiven
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Vai su: https://console.aiven.io
+2. Seleziona il tuo servizio MySQL
+3. Copia le credenziali dalla sezione "Overview"
+
+PASSO 2: Configura il Database Aiven
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Vai su: https://console.aiven.io
+2. Seleziona il tuo servizio MySQL
+3. Copia le credenziali dalla sezione "Overview"
+
+PASSO 3: Modifica il file .env
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Apri: backend\.env
+
+Sostituisci con le TUE credenziali Aiven:
+  DATABASE_URL=mysql+pymysql://TUO_USER:TUA_PASSWORD@TUO_HOST:PORTA/DATABASE
+
+Esempio:
+  DATABASE_URL=mysql+pymysql://avnadmin:abc123xyz@mysql-server.aivencloud.com:12345/defaultdb
+
+PASSO 3: (Opzionale) Configura SSL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Se Aiven richiede SSL:
+1. Scarica il certificato CA da Aiven Console
+2. Salvalo come: backend\ca.pem
+3. Aggiungi alla fine dell'URL: ?ssl_ca=ca.pem
+
+Esempio con SSL:
+  DATABASE_URL=mysql+pymysql://user:pass@host:port/db?ssl_ca=ca.pem
+
+PASSO 4: Avvia il Backend
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Apri PowerShell nella cartella del progetto:
+
+  cd backend
+  .\start.ps1
+
+Oppure manualmente:
+  cd backend
+  python -m venv venv
+  .\venv\Scripts\Activate.ps1
+  pip install -r requirements.txt
+  python test_connection.py
+  uvicorn app.main:app --reload
+
+PASSO 5: Testa l'API
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Apri nel browser:
+  http://localhost:8000/docs
+
+PASSO 6: Avvia il Frontend (opzionale)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+In un'altra finestra PowerShell:
+  cd frontend
+  .\start.ps1
+
+Il browser si aprirà automaticamente su:
+  http://localhost:3000/index.html
+
+OPPURE manualmente:
+  cd frontend
+  python -m http.server 3000
+  Poi vai su: http://localhost:3000/index.html
+
+═══════════════════════════════════════════════════════════
+  📚 DOCUMENTAZIONE
+═══════════════════════════════════════════════════════════
+
+README.md          → Documentazione completa
+AIVEN_SETUP.md     → Guida dettagliata Aiven
+QUICKSTART.md      → Guida rapida
+CHANGELOG.md       → Tutte le modifiche effettuate
+
+═══════════════════════════════════════════════════════════
+  🔧 STRUTTURA FILE
+═══════════════════════════════════════════════════════════
+
+cucina-italiana/
+  ├── backend/
+  │   ├── .env              ← MODIFICA QUESTO con credenziali Aiven
+  │   ├── .env.example      ← Template di esempio
+  │   ├── start.ps1         ← Script avvio PowerShell
+  │   ├── start.bat         ← Script avvio CMD
+  │   ├── test_connection.py ← Testa connessione database
+  │   └── app/              ← Codice sorgente API
+  ├── frontend/
+  │   ├── index.html
+  │   ├── app.js
+  │   └── styles.css
+  ├── schema.sql            ← ESEGUI QUESTO su Aiven PRIMA!
+  └── Documentazione (README, guide, ecc.)
+
+═══════════════════════════════════════════════════════════
+  ⚠️ IMPORTANTE
+═══════════════════════════════════════════════════════════
+
+✓ NON committare il file .env con le credenziali reali!
+✓ Usa JWT_SECRET casuale e sicuro (min 32 caratteri)
+✓ Abilita SSL per connessioni Aiven in produzione
+✓ Aggiungi il tuo IP alla whitelist di Aiven se necessario
+
+═══════════════════════════════════════════════════════════
+  🆘 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════
+
+Errore connessione database?
+  → Verifica credenziali in .env
+  → Controlla che il servizio Aiven sia attivo
+  → Verifica IP nella whitelist Aiven
+
+Errore SSL?
+  → Scarica certificato CA da Aiven
+  → Aggiungi ?ssl_ca=ca.pem all'URL
+
+Porta 8000 occupata?
+  → Usa: uvicorn app.main:app --reload --port 8080
+
+═══════════════════════════════════════════════════════════
+
+Buon sviluppo! 🚀
+
+Per ulteriori informazioni consulta: README.md o AIVEN_SETUP.md

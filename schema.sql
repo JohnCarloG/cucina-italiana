@@ -1,0 +1,163 @@
+-- Database e schema completo per "La Cucina Italiana" (webapp: consultare e acquistare ricette complete)
+-- Questo script deve essere eseguito su Aiven MySQL prima di avviare l'applicazione
+
+DROP DATABASE IF EXISTS cucina;
+CREATE DATABASE cucina CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE cucina;
+
+-- GENERI (primi, secondi, dolci, vegetariani, senza_glutine, ecc.)
+CREATE TABLE IF NOT EXISTS GENERI (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(80) NOT NULL UNIQUE
+);
+
+-- RICETTE
+CREATE TABLE IF NOT EXISTS RICETTE (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  titolo VARCHAR(150) NOT NULL,
+  descrizione TEXT NOT NULL,
+  porzioni_default INT NOT NULL DEFAULT 4, -- porzioni per cui sono indicate le quantità nel DB
+  tempo_preparazione_min INT NULL,
+  difficolta ENUM('facile','media','difficile') DEFAULT 'media'
+);
+
+-- Associazione ricetta - genere (molti a molti)
+CREATE TABLE IF NOT EXISTS GENERE_RICETTA (
+  ID_GENERE INT NOT NULL,
+  ID_RICETTA INT NOT NULL,
+  PRIMARY KEY (ID_GENERE, ID_RICETTA),
+  CONSTRAINT fk_genere_ricetta FOREIGN KEY (ID_GENERE) REFERENCES GENERI(ID) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ricetta_genere FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- MEDIA (immagini) per ricette
+CREATE TABLE IF NOT EXISTS MEDIA (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  url TEXT NOT NULL,
+  tipo VARCHAR(50) NOT NULL, -- 'image','video'
+  ID_RICETTA INT NOT NULL,
+  CONSTRAINT fk_media_ricetta FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- INGREDIENTI con unità base e prezzo unitario (prezzo per unità_base)
+CREATE TABLE IF NOT EXISTS INGREDIENTI (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(120) NOT NULL,
+  unita_base VARCHAR(20) NOT NULL, -- 'kg','g','l','ml','pz' (pezzo)
+  prezzo_per_unita DECIMAL(10,2) NOT NULL, -- prezzo nella valuta (es. EUR) per 1 unita_base
+  UNIQUE(nome, unita_base)
+);
+
+-- Relazione ricetta - ingrediente: quantità per persona (quantita_per_persona) nel unità indicata
+CREATE TABLE IF NOT EXISTS RICETTA_INGREDIENTE (
+  ID_RICETTA INT NOT NULL,
+  ID_INGREDIENTE INT NOT NULL,
+  quantita_per_persona DECIMAL(10,4) NOT NULL,
+  unita_misura VARCHAR(20) NOT NULL, -- deve corrispondere ad unita_base dell'ingrediente
+  PRIMARY KEY (ID_RICETTA, ID_INGREDIENTE),
+  CONSTRAINT fk_ricetta_ingrediente FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ingrediente_ricetta FOREIGN KEY (ID_INGREDIENTE) REFERENCES INGREDIENTI(ID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- VINI
+CREATE TABLE IF NOT EXISTS VINI (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(150) NOT NULL,
+  descrizione TEXT NULL,
+  tipo VARCHAR(80) NULL, -- 'Rosso','Bianco','Spumante', ecc.
+  nazione VARCHAR(80) NULL,
+  regione VARCHAR(80) NULL,
+  prezzo DECIMAL(10,2) NULL -- prezzo per bottiglia
+);
+
+-- Collegamento ricetta - vino consigliato (opzionale)
+CREATE TABLE IF NOT EXISTS RICETTA_VINO (
+  ID_RICETTA INT NOT NULL,
+  ID_VINO INT NOT NULL,
+  annata INT NULL,
+  PRIMARY KEY (ID_RICETTA, ID_VINO),
+  CONSTRAINT fk_ricetta_vino FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_vino_ricetta FOREIGN KEY (ID_VINO) REFERENCES VINI(ID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- UTENTI (registrati)
+CREATE TABLE IF NOT EXISTS UTENTI (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(60) NOT NULL UNIQUE,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL, -- conservare hash (es. bcrypt)
+  nome VARCHAR(100) NULL,
+  cognome VARCHAR(100) NULL,
+  indirizzo TEXT NULL,
+  data_creazione DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- PUNTEGGIO_RICETTA (likes/ratings)
+CREATE TABLE IF NOT EXISTS PUNTEGGIO_RICETTA (
+  ID_UTENTE INT NOT NULL,
+  ID_RICETTA INT NOT NULL,
+  punteggio TINYINT NOT NULL CHECK (punteggio BETWEEN 1 AND 5),
+  PRIMARY KEY (ID_UTENTE, ID_RICETTA),
+  CONSTRAINT fk_punteggio_utente FOREIGN KEY (ID_UTENTE) REFERENCES UTENTI(ID) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_punteggio_ricetta FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- SALVA_RICETTA (ricette salvate dall'utente)
+CREATE TABLE IF NOT EXISTS SALVA_RICETTA (
+  ID_UTENTE INT NOT NULL,
+  ID_RICETTA INT NOT NULL,
+  data_salvataggio DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (ID_UTENTE, ID_RICETTA),
+  CONSTRAINT fk_salva_utente FOREIGN KEY (ID_UTENTE) REFERENCES UTENTI(ID) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_salva_ricetta FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CARRELLI: ogni utente ha (al massimo) un carrello attivo
+CREATE TABLE IF NOT EXISTS CARRELLI (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  ID_UTENTE INT NOT NULL,
+  creato DATETIME DEFAULT CURRENT_TIMESTAMP,
+  aggiornato DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_carrello_utente FOREIGN KEY (ID_UTENTE) REFERENCES UTENTI(ID) ON DELETE CASCADE
+);
+
+-- Elementi del carrello: ricetta selezionata con numero persone e vino opzionale
+CREATE TABLE IF NOT EXISTS CARRELLO_ITEM (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  ID_CARRELLO INT NOT NULL,
+  ID_RICETTA INT NOT NULL,
+  ID_VINO INT NULL,
+  persone INT NOT NULL DEFAULT 1,
+  prezzo_item DECIMAL(10,2) NULL, -- snapshot del prezzo calcolato al momento dell'inserimento
+  CONSTRAINT fk_carrelloitem_carrello FOREIGN KEY (ID_CARRELLO) REFERENCES CARRELLI(ID) ON DELETE CASCADE,
+  CONSTRAINT fk_carrelloitem_ricetta FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE,
+  CONSTRAINT fk_carrelloitem_vino FOREIGN KEY (ID_VINO) REFERENCES VINI(ID) ON DELETE SET NULL
+);
+
+-- ORDINI (checkout)
+CREATE TABLE IF NOT EXISTS ORDINI (
+  ID INT PRIMARY KEY AUTO_INCREMENT,
+  ID_UTENTE INT NOT NULL,
+  totale DECIMAL(10,2) NOT NULL,
+  data_ordine DATETIME DEFAULT CURRENT_TIMESTAMP,
+  stato ENUM('creato','pagato','in_consegna','consegnato','annullato') DEFAULT 'creato',
+  indirizzo_consegna TEXT NULL,
+  CONSTRAINT fk_ordini_utente FOREIGN KEY (ID_UTENTE) REFERENCES UTENTI(ID) ON DELETE CASCADE
+);
+
+-- Dettaglio ordine: ricette acquistate (snapshot prezzo, persone, vino selezionato)
+CREATE TABLE IF NOT EXISTS ORDINE_RICETTA (
+  ID_ORDINE INT NOT NULL,
+  ID_RICETTA INT NOT NULL,
+  ID_VINO INT NULL,
+  persone INT NOT NULL,
+  prezzo_item DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (ID_ORDINE, ID_RICETTA),
+  CONSTRAINT fk_ordinericetta_ordine FOREIGN KEY (ID_ORDINE) REFERENCES ORDINI(ID) ON DELETE CASCADE,
+  CONSTRAINT fk_ordinericetta_ricetta FOREIGN KEY (ID_RICETTA) REFERENCES RICETTE(ID) ON DELETE CASCADE,
+  CONSTRAINT fk_ordinericetta_vino FOREIGN KEY (ID_VINO) REFERENCES VINI(ID) ON DELETE SET NULL
+);
+
+-- Indici utili per ricerca
+CREATE INDEX idx_ricette_titolo ON RICETTE(titolo);
+CREATE INDEX idx_ingredienti_nome ON INGREDIENTI(nome);

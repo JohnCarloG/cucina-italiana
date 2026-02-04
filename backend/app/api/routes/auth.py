@@ -12,28 +12,47 @@ from app.schemas import LoginRequest, TokenResponse, UserCreate, UserProfile
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserProfile, status_code=status.HTTP_201_CREATED)
-
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Email già registrata")
+    
     user = User(
-        username=payload.username,
+        nome=payload.username,  # Map username to nome
         email=payload.email,
-        hashed_password=hash_password(payload.password),
+        password_hash=hash_password(payload.password),
+        telefono=getattr(payload, 'telefono', None),
     )
     db.add(user)
     db.commit()
     db.refresh(user)
-    return UserProfile(id=user.id, username=user.username, email=user.email, is_admin=user.is_admin)
+    
+    # Create token and return with user info
+    access_token = create_token(str(user.ID), timedelta(minutes=settings.access_token_exp_minutes))
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "ID": user.ID,
+            "nome": user.nome,
+            "email": user.email,
+        }
+    }
 
 
-@router.post("/login", response_model=TokenResponse)
-
+@router.post("/login")
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
-    if not user or not verify_password(payload.password, user.hashed_password):
+    if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenziali non valide")
-    access_token = create_token(str(user.id), timedelta(minutes=settings.access_token_exp_minutes))
-    refresh_token = create_token(str(user.id), timedelta(days=settings.refresh_token_exp_days))
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    
+    access_token = create_token(str(user.ID), timedelta(minutes=settings.access_token_exp_minutes))
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "ID": user.ID,
+            "nome": user.nome,
+            "email": user.email,
+        }
+    }
